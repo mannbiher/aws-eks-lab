@@ -6,6 +6,7 @@ locals {
   user-data = templatefile("${path.module}/userdata.yaml", {
     private-vpc = data.aws_vpc.prod.cidr_block
     public-vpc  = data.aws_vpc.shared.cidr_block
+    nonprod-vpc = data.aws_vpc.nonprod.cidr_block
   })
   tags = {
     Project = "eks-lab"
@@ -18,6 +19,11 @@ data "aws_vpc" "prod" {
 
 data "aws_vpc" "shared" {
   id = data.terraform_remote_state.network.outputs.shared-vpc-id
+
+}
+
+data "aws_vpc" "nonprod" {
+  id = data.terraform_remote_state.network.outputs.nonprod-vpc-id
 
 }
 

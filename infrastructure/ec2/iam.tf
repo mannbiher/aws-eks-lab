@@ -5,7 +5,7 @@ resource "aws_iam_instance_profile" "profile" {
 
 resource "aws_iam_role" "role" {
   name = "client_role"
-  path = "/my/app/client/"
+  path = "/org/app/client/"
 
   assume_role_policy = <<EOF
 {
@@ -40,14 +40,14 @@ resource "aws_iam_role_policy_attachment" "eks-read" {
 
 data "aws_iam_policy_document" "eks-read" {
   statement {
-    actions =["eks:DescribeCluster"]
+    actions   = ["eks:DescribeCluster"]
     resources = ["*"]
   }
 }
 
 resource "aws_iam_policy" "eks-read" {
-  name = "eks-read"
-  path = "/org/app/eks/"
+  name   = "eks-read"
+  path   = "/org/app/eks/"
   policy = data.aws_iam_policy_document.eks-read.json
 }
-  
+

@@ -30,6 +30,7 @@ write_files:
       MaxRequestsPerChild 0
       Allow 127.0.0.1
       Allow ${private-vpc}
+      Allow ${nonprod-vpc}
       Allow ${public-vpc}
       ViaProxyName "tinyproxy"
       ConnectPort 443
