@@ -1,0 +1,68 @@
+#cloud-config
+# users:
+#   - default
+#   - name: myapp
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - tinyproxy
+  - awscli
+  - unzip
+  - zip
+
+write_files:
+  - content: |
+      User tinyproxy
+      Group tinyproxy
+      Port 8080
+      Timeout 600
+      DefaultErrorFile "/usr/share/tinyproxy/default.html"
+      StatFile "/usr/share/tinyproxy/stats.html"
+      LogFile "/var/log/tinyproxy/tinyproxy.log"
+      LogLevel Connect
+      PidFile "/run/tinyproxy/tinyproxy.pid"
+      MaxClients 100
+      MinSpareServers 5
+      MaxSpareServers 20
+      StartServers 10
+      MaxRequestsPerChild 0
+      Allow 127.0.0.1
+      Allow ${private-vpc}
+      Allow ${public-vpc}
+      ViaProxyName "tinyproxy"
+      ConnectPort 443
+      ConnectPort 563
+    path: /etc/tinyproxy/tinyproxy.conf
+  - content: |
+      {
+        "agent": {
+          "metrics_collection_interval": 10,
+          "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+        },
+        "logs": {
+          "logs_collected": {
+            "files": {
+              "collect_list": [
+                {
+                  "file_path": "/var/log/tinyproxy/tinyproxy.log",
+                  "log_group_name": "/tinyproxy",
+                  "log_stream_name": "{instance_id}",
+                  "timezone": "UTC"
+                }
+              ]
+            }
+          },
+          "log_stream_name": "{instance_id}",
+          "force_flush_interval": 15
+        }
+      }
+    path: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+
+runcmd:
+  - [wget, "https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
+      -O,/run/amazon-cloudwatch-agent.deb]
+  - dpkg -i -E /run/amazon-cloudwatch-agent.deb
+  - [/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl, -a, fetch-config, -m, ec2 ,-s, 
+      -c, "file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"]
