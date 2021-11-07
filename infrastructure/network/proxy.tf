@@ -17,7 +17,7 @@ resource "aws_security_group" "proxy-inbound" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
+    cidr_blocks = ["${data.http.my_ip.body}/32"]
   }
 
 

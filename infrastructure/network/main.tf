@@ -60,7 +60,7 @@ resource "aws_subnet" "nonprod-private" {
   cidr_block        = cidrsubnet(aws_vpc.nonprod.cidr_block, 4, each.key)
   availability_zone = local.az_names[each.key]
   tags = {
-    Name = "private-${local.az_names[each.key]}"
+    Name = "nonprod-private-${local.az_names[each.key]}"
   }
 }
 

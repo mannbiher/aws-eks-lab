@@ -18,3 +18,7 @@ output "proxy-sg-id" {
 output "client-sg-id" {
   value = aws_security_group.client-sg.id
 }
+
+output "my_ip" {
+  value = data.http.my_ip.body
+}
