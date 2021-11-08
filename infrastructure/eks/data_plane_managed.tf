@@ -1,49 +1,19 @@
-# Optionally, enable Security Groups for Pods
-# Reference: https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html
-# resource "aws_iam_role_policy_attachment" "example-AmazonEKSVPCResourceController" {
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-#   role       = aws_iam_role.example.name
-# }
+
+locals {
+  cluster-host = trimprefix(aws_eks_cluster.devops-eks-cluster.endpoint, "https://")
+}
 
 locals {
   user-data = templatefile("${path.module}/userdata.sh", {
-    proxy    = var.proxy
-    vpc-cidr = data.aws_vpc.prod.cidr_block
-    region   = data.aws_region.current.name
+    proxy        = var.proxy
+    vpc-cidr     = "10.0.0.0/8"
+    region       = data.aws_region.current.name
+    cluster-host = local.cluster-host
   })
   tags = {
     Project = "eks-lab"
   }
 }
-
-resource "aws_eks_node_group" "managed" {
-  cluster_name    = aws_eks_cluster.devops-eks-cluster.name
-  node_group_name = "ec2-managed"
-  node_role_arn   = aws_iam_role.worker-role.arn
-  subnet_ids      = data.aws_subnet_ids.private-subnets.ids
-
-  scaling_config {
-    desired_size = 1
-    max_size     = 1
-    min_size     = 1
-  }
-
-  capacity_type = "SPOT"
-
-  launch_template {
-    name    = aws_launch_template.eks-devops.name
-    version = aws_launch_template.eks-devops.latest_version
-  }
-
-  # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
-  # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
-  depends_on = [
-    aws_iam_role_policy_attachment.amazoneks-worker-node-policy,
-    aws_iam_role_policy_attachment.amazon-ecr-readonly,
-    aws_iam_role_policy_attachment.amazoneks-cni-policy
-  ]
-}
-
 
 resource "aws_iam_role" "worker-role" {
   name                 = "eks-worker-role"
@@ -76,6 +46,39 @@ resource "aws_iam_role_policy_attachment" "amazon-ecr-readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.worker-role.name
 }
+
+
+resource "aws_eks_node_group" "managed" {
+  cluster_name    = aws_eks_cluster.devops-eks-cluster.name
+  node_group_name = "ec2-managed"
+  node_role_arn   = aws_iam_role.worker-role.arn
+  subnet_ids      = data.aws_subnet_ids.private-subnets.ids
+
+  scaling_config {
+    desired_size = 1
+    max_size     = 1
+    min_size     = 1
+  }
+
+  capacity_type = "SPOT"
+
+  launch_template {
+    name    = aws_launch_template.eks-devops.name
+    version = aws_launch_template.eks-devops.latest_version
+  }
+
+  # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
+  # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
+  depends_on = [
+    aws_iam_role_policy_attachment.amazoneks-worker-node-policy,
+    aws_iam_role_policy_attachment.amazon-ecr-readonly,
+    aws_iam_role_policy_attachment.amazoneks-cni-policy,
+    kubernetes_config_map.aws-auth
+  ]
+}
+
+
+
 
 resource "aws_launch_template" "eks-devops" {
   name                   = "eks-devops"

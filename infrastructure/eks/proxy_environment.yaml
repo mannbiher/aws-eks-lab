@@ -8,5 +8,5 @@ data:
   HTTP_PROXY: http://10.255.6.191:8080
   https_proxy: http://10.255.6.191:8080
   HTTPS_PROXY: http://10.255.6.191:8080
-  no_proxy: 10.254.0.0/16,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.us-east-2.amazonaws.com
-  NO_PROXY: 10.254.0.0/16,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.us-east-2.amazonaws.com
+  no_proxy: 172.20.0.0/16,10.254.0.0/16,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.us-east-2.amazonaws.com
+  NO_PROXY: 172.20.0.0/16,10.254.0.0/16,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.us-east-2.amazonaws.com

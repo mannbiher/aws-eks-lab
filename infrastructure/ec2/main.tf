@@ -108,6 +108,7 @@ resource "aws_launch_template" "tinyproxy" {
     associate_public_ip_address = true
     security_groups             = [data.terraform_remote_state.network.outputs.proxy-sg-id]
     subnet_id                   = tolist(data.aws_subnet_ids.public-subnets.ids)[0]
+    private_ip_address          = "10.255.0.4"
 
   }
 
@@ -120,7 +121,11 @@ resource "aws_launch_template" "tinyproxy" {
   tag_specifications {
     resource_type = "instance"
 
-    tags = local.tags
+    tags = merge(
+      local.tags,
+      {
+        Name = "TinyProxy"
+    })
   }
   tag_specifications {
     resource_type = "volume"

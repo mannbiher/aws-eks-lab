@@ -1,4 +1,5 @@
 resource "aws_iam_instance_profile" "profile" {
+  path = "/org/app/client/"
   name = "client_role"
   role = aws_iam_role.role.name
 }

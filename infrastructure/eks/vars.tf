@@ -13,3 +13,8 @@ variable "node_sg" {
 
 variable "proxy" {
 }
+
+variable "kube-admin-rolenames" {
+  type    = list(string)
+  default = []
+}

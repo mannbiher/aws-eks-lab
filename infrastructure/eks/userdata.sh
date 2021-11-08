@@ -22,8 +22,8 @@ http_proxy=http://$PROXY
 https_proxy=http://$PROXY
 HTTP_PROXY=http://$PROXY
 HTTPS_PROXY=http://$PROXY
-no_proxy=$VPC_CIDR,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.${region}.amazonaws.com
-NO_PROXY=$VPC_CIDR,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.${region}.amazonaws.com
+no_proxy=$VPC_CIDR,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.${region}.amazonaws.com,${cluster-host}
+NO_PROXY=$VPC_CIDR,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.${region}.amazonaws.com,${cluster-host}
 EOF
 
 #Configure docker with the proxy
