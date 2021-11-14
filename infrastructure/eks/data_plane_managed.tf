@@ -55,9 +55,9 @@ resource "aws_eks_node_group" "managed" {
   subnet_ids      = data.aws_subnet_ids.private-subnets.ids
 
   scaling_config {
-    desired_size = 1
-    max_size     = 1
-    min_size     = 1
+    desired_size = 3
+    max_size     = 3
+    min_size     = 3
   }
 
   capacity_type = "SPOT"

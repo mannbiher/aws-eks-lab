@@ -19,11 +19,10 @@ locals {
       "groups"   = ["system:bootstrappers", "system:nodes"]
     }
   ]
-  admin-roles = length(var.kube-admin-rolenames) == 0 ? [] : [
-    for rolename in [var.kube-admin-rolenames] : {
-      "rolearn"  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${rolename}"
-      "username" = "admin:{{SessionName}}"
-      "groups"   = ["system:masters"]
+  admin-roles = [for rolename in var.kube-admin-rolenames : {
+    "rolearn"  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${rolename}"
+    "username" = "admin:{{SessionName}}"
+    "groups"   = ["system:masters"]
 
     }
   ]
@@ -59,8 +58,8 @@ resource "kubernetes_config_map" "proxy-environment" {
     "HTTP_PROXY"  = "http://${var.proxy}"
     "https_proxy" = "http://${var.proxy}"
     "HTTPS_PROXY" = "http://${var.proxy}"
-    "no_proxy"    = "172.20.0.0/16,10.0.0.0/8,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.${data.aws_region.current.name}.amazonaws.com,${local.cluster-host}"
-    "NO_PROXY"    = "172.20.0.0/16,10.0.0.0/8,localhost,127.0.0.1,169.254.169.254,.internal,s3.amazonaws.com,.s3.${data.aws_region.current.name}.amazonaws.com,${local.cluster-host}"
+    "no_proxy"    = "172.20.0.0/16,10.0.0.0/8,localhost,127.0.0.1,169.254.169.254,.internal,.s3.${data.aws_region.current.name}.amazonaws.com,${local.cluster-host}"
+    "NO_PROXY"    = "172.20.0.0/16,10.0.0.0/8,localhost,127.0.0.1,169.254.169.254,.internal,.s3.${data.aws_region.current.name}.amazonaws.com,${local.cluster-host}"
   }
 
 }

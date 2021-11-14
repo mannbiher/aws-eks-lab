@@ -16,7 +16,7 @@ def get_logs(loggroup, streamname):
         response = client.get_log_events(
             logGroupName=loggroup,
             logStreamName=streamname,
-            # startFromHead=True|False
+            startFromHead=True #|False
         )
         if last_token is not None and last_token == next_token:
             return
