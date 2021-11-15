@@ -22,6 +22,10 @@ variable "ec2-availability-zone" {
 
 }
 
+variable "proxy-ip" {
+  default = "10.255.0.4"
+}
+
 
 variable "ami-id" {
   description = "Preconfigured image for FLANNEL data and code"

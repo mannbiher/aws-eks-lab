@@ -14,16 +14,22 @@ locals {
 }
 
 data "aws_vpc" "prod" {
-  id = data.terraform_remote_state.network.outputs.prod-vpc-id
+  tags = {
+    Name = "prod"
+  }
 }
 
 data "aws_vpc" "shared" {
-  id = data.terraform_remote_state.network.outputs.shared-vpc-id
+  tags = {
+    Name = "shared"
+  }
 
 }
 
 data "aws_vpc" "nonprod" {
-  id = data.terraform_remote_state.network.outputs.nonprod-vpc-id
+  tags = {
+    Name = "nonprod"
+  }
 
 }
 
@@ -35,17 +41,16 @@ data "aws_subnet_ids" "private-subnets" {
   vpc_id = data.aws_vpc.prod.id
 }
 
-
-data "terraform_remote_state" "network" {
-  backend = "s3"
-
-  config = {
-    bucket = "m-terraform-state"
-    key    = "eks-state-network"
-    region = "us-east-1"
-
-  }
+data "aws_security_group" "proxy-sg" {
+  name   = "proxy_inbound"
+  vpc_id = data.aws_vpc.shared.id
 }
+
+data "aws_security_group" "client-sg" {
+  name   = "client-sg"
+  vpc_id = data.aws_vpc.prod.id
+}
+
 
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -106,9 +111,9 @@ resource "aws_launch_template" "tinyproxy" {
 
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = [data.terraform_remote_state.network.outputs.proxy-sg-id]
+    security_groups             = [data.aws_security_group.proxy-sg.id]
     subnet_id                   = tolist(data.aws_subnet_ids.public-subnets.ids)[0]
-    private_ip_address          = "10.255.0.4"
+    private_ip_address          = var.proxy-ip
 
   }
 
@@ -180,7 +185,7 @@ resource "aws_launch_template" "private-ec2" {
 
   network_interfaces {
     # associate_public_ip_address = true
-    security_groups = [data.terraform_remote_state.network.outputs.client-sg-id]
+    security_groups = [data.aws_security_group.client-sg.id]
     subnet_id       = tolist(data.aws_subnet_ids.private-subnets.ids)[0]
   }
 
@@ -209,4 +214,56 @@ resource "aws_launch_template" "private-ec2" {
   tags = local.tags
 
 
+}
+
+resource "aws_spot_instance_request" "tinyproxy" {
+  # spot settings
+  # spot_price           = var.spot-price
+  spot_type            = "one-time"
+  wait_for_fulfillment = true
+  # valid_until          = timeadd(timestamp(), "10m")
+  # ec2 instance
+  ami                         = data.aws_ami.ubuntu.id
+  associate_public_ip_address = true
+  disable_api_termination     = false
+  ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.profile.name
+  instance_type               = var.instance-type
+  key_name                    = var.ec2-key
+  private_ip                  = var.proxy-ip
+  subnet_id                   = tolist(data.aws_subnet_ids.public-subnets.ids)[0]
+  user_data_base64            = base64encode(local.user-data)
+  vpc_security_group_ids      = [data.aws_security_group.proxy-sg.id]
+
+  root_block_device {
+    encrypted             = true
+    delete_on_termination = true
+    volume_type           = "gp2"
+    volume_size           = 20
+  }
+
+  tags = local.tags
+}
+
+resource "aws_ec2_tag" "ec2_tag" {
+  for_each    = merge(local.tags, { Name = "TinyProxy" })
+  resource_id = aws_spot_instance_request.tinyproxy.spot_instance_id
+  key         = each.key
+  value       = each.value
+}
+
+data "aws_ebs_volume" "ebs_volume" {
+  most_recent = true
+
+  filter {
+    name   = "attachment.instance-id"
+    values = [aws_spot_instance_request.tinyproxy.spot_instance_id]
+  }
+}
+
+resource "aws_ec2_tag" "volume_tag" {
+  for_each    = local.tags
+  resource_id = data.aws_ebs_volume.ebs_volume.id
+  key         = each.key
+  value       = each.value
 }

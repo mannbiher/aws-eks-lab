@@ -62,4 +62,8 @@ resource "kubernetes_config_map" "proxy-environment" {
     "NO_PROXY"    = "172.20.0.0/16,10.0.0.0/8,localhost,127.0.0.1,169.254.169.254,.internal,.s3.${data.aws_region.current.name}.amazonaws.com,${local.cluster-host}"
   }
 
+  provisioner "local-exec" {
+    command = "./proxy_setup.sh ${aws_eks_cluster.devops-eks-cluster.id} ${split(":", aws_eks_cluster.devops-eks-cluster.arn)[3]}"
+  }
+
 }

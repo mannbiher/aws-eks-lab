@@ -30,7 +30,7 @@ resource "aws_security_group" "proxy-inbound" {
 }
 
 resource "aws_security_group" "client-sg" {
-  name        = "clien-sg"
+  name        = "client-sg"
   description = "Allow inbound from bastion"
   vpc_id      = aws_vpc.prod.id
 
