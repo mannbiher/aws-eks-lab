@@ -1,3 +1,4 @@
+
 #!/bin/bash
 cd irsa
 terraform init
@@ -15,6 +16,10 @@ cd ../ec2
 terraform init
 terraform destroy -input=false -auto-approve
 
+
+cd ../vpc_endpoints
+terraform init
+terraform destroy -input=false -auto-approve
 
 
 
